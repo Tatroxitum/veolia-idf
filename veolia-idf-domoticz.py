@@ -170,7 +170,7 @@ class Configuration:
 # Object that retrieve the historical data from Veolia website
 ################################################################################
 class VeoliaCrawler:
-    site_url = "https://espace-client.vedif.eau.veolia.fr/s/login/"
+    site_url = "https://connexion.leaudiledefrance.fr/espace-particuliers/s/login/"
     download_filename = "historique_jours_litres.csv"
 
     def __init__(self, config_dict, super_print=None, debug=False):
@@ -685,14 +685,14 @@ class VeoliaCrawler:
         self.wait_until_disappeared(By.CSS_SELECTOR, "lightning-spinner")
         time.sleep(1)
 
-        ### COMPORTEMENT DIFFERENT S'IL S AGIT D'UN MULTU CONTRATS
+        ### COMPORTEMENT DIFFERENT S'IL S AGIT D'UN MULTI CONTRATS
         ### OU D'UN CONTRAT UNIQUE (CLICK DIRECTEMENT SUR HISTORIQUE)
 
-        self.print("Wait for MENU contrats or historique", end="")
+        self.print("Wait for MENU Consommation or Tous mes contrats", end="")
         ep = EC.visibility_of_element_located(
             (
                 By.XPATH,
-                "//span[contains(text(), 'CONTRATS') or contains(text(), 'HISTORIQUE')]",
+                "//span[contains(text(), 'Tous mes contrats') or contains(text(), 'Consommation')]",
             )
         )
         el = self.__wait.until(
@@ -715,27 +715,29 @@ class VeoliaCrawler:
         self.print(st="ok")
 
         # GESTION DU PARCOURS MULTICONTRATS
-        if menu_type == "CONTRATS":
+        if menu_type == "Tous mes contrats":
             time.sleep(2)
             self.click_in_view(
-                By.LINK_TEXT,
-                str(self.configuration["veolia_contract"]),
-                wait_message="Select contract : %s"
-                % (str(self.configuration["veolia_contract"]),),
+                By.XPATH,
+                r"//div[@class='fra-contrat-table-row']//span[contains(@class, 'link')]/a[text()='"
+                + str(self.configuration["veolia_contract"])
+                + r"']",
+                wait_message="Select contract : %s" % (str(self.configuration["veolia_contract"]),),
                 click_message="Click on contract",
                 delay=0,
             )
 
-        time.sleep(2)
+            time.sleep(2)
 
-        ###### Click Historique #####
-        self.click_in_view(
-            By.LINK_TEXT,
-            "Historique",
-            wait_message="Wait for historique menu",
-            click_message="Click on historique menu",
-            delay=4,
-        )
+            ###### Click Historique #####
+            self.click_in_view(
+                By.XPATH,
+                r"//*[(self::a and text()='Historique')"
+                r" or (self::span and contains(text(), 'Historique'))]",
+                wait_message="Wait for historique menu",
+                click_message="Click on historique menu",
+                delay=10,
+            )
 
         time.sleep(10)
 
